@@ -5,11 +5,13 @@
 # Usage: plenv install [-v|--verbose] <version>
 #        plenv install [-v|--verbose] /path/to/definition
 #        plenv install -l|--list
+#        plenv install --git /path/to/local/git/perl@v5.19.11
 #
 #   -l/--list        List all available versions
 #   -v/--verbose     Verbose mode: print compilation status to stdout
 #   --as=<NAME>      Install the definition as <NAME>
 #   --test           Run test cases
+#   --git            Install perl from a git repository
 #
 # For detailed information on installing Perl versions with
 # perl-build, including a list of environment variables for adjusting
@@ -48,6 +50,7 @@ sub main {
         'h|help'         => \my $help,
         'l|list'         => \my $list,
         'as=s'           => \my $as,
+        'git'            => \my $git,
 
         # perl-build args
         'j|jobs=i' => \my $jobs,
@@ -68,8 +71,20 @@ sub main {
 
     my $definition = shift @ARGV or usage();
     if (not defined $as) {
-        $as = $definition;
+        if ($git) {
+            if ($definition =~ m{@(.+)$}) {
+                $as = $1;
+            } else {
+                my $rev = `cd $definition && git log -1 --format=format:%h`;
+                $? == 0 && $rev or die "Failed to get HEAD revision of $definition";
+                chomp $rev;
+                $as = $rev;
+            }
+        } else {
+            $as = $definition;
+        }
     }
+
     if ($definition =~ /\A-/) {
         die "You should put `${definition}` as a last argument.\n";
     }
@@ -97,6 +112,7 @@ sub main {
         (map { "-A$_" } @A),
         (map { "-U$_" } @U),
         ($jobs ? "--jobs=${jobs}" : ()),
+        ($git ? "--git" : ()),
         @ARGV,
         $definition,
         $prefix

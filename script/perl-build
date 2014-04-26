@@ -31,6 +31,7 @@ GetOptions(
     'tarball-dir=s' => \my $tarball_dir,
     'version' => \my $show_version,
     'symlink-devel-executables!' => \$symlink_devel_executables,
+    'git' => \my $git,
 );
 for (@D, @A, @U) {
     s/^=//;
@@ -63,7 +64,19 @@ push @configure_options, map { "-U$_" } @U;
 
 $ENV{PERL5_PATCHPERL_PLUGIN} = $patches if defined $patches;
 
-if ($stuff =~ m{^http://}) {
+if ($git) {
+    my $repository = $stuff;
+    Perl::Build->install_from_git_repository(
+        $repository => (
+            dst_path          => $dest,
+            configure_options => \@configure_options,
+            test              => $test,
+            build_dir         => $build_dir,
+            jobs              => $jobs,
+            tarball_dir       => $tarball_dir,
+        )
+    );
+} elsif ($stuff =~ m{^http://}) {
     Perl::Build->install_from_url(
         $stuff => (
             dst_path          => $dest,
@@ -173,6 +186,13 @@ Show version number and exit.
 =item --symlink-devel-executables
 
 Create symlinks for development version perl commands.
+
+=item --git
+
+    % perl-build --git /path/local/git/perl@v5.19.11 perl-5.19.11
+    % perl-build --git git://perl5.git.perl.org/perl.git@blead blead-perl
+
+Build/install perl from a git repository.
 
 =back
 

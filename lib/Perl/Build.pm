@@ -199,6 +199,34 @@ sub install_from_tarball {
     );
 }
 
+sub install_from_git_repository {
+    my ($class, $repository, %args) = @_;
+    $args{patchperl} && Carp::croak "The patchperl argument was deprected.";
+
+    my $build_dir = $args{build_dir}
+        || File::Temp::tempdir( CLEANUP => 1 );
+    my $dst_path = $args{dst_path}
+        or die "Missing mandatory parameter: dst_path";
+    my $configure_options = $args{configure_options}
+        || ['-de'];
+
+    my $commitish = $repository =~ s/@(.+)$// ? $1 : ""; # XXX may conflict some uri
+    my $src_path = catfile($build_dir, sprintf("git.%d.%d", time, $$));
+    $class->do_system(["git", "clone", $repository, $src_path]);
+    if ($commitish) {
+        my $guard = pushd $src_path;
+        $class->do_system(["git", "checkout", $commitish]);
+    }
+
+    Perl::Build->install(
+        src_path          => $src_path,
+        dst_path          => $dst_path,
+        configure_options => $configure_options,
+        test              => $args{test},
+        jobs              => $args{jobs},
+    );
+}
+
 sub install {
     my ($class, %args) = @_;
     $args{patchperl} && Carp::croak "The patchperl argument was deprected.";
@@ -396,6 +424,42 @@ Parallel building and testing.
 =item Perl::Build->install_from_tarball($dist_tarball_path, %args)
 
 Install perl from tar ball. This method extracts tar ball, build, and install.
+
+You can pass following options in %args.
+
+=over 4
+
+=item dst_path (Required)
+
+Destination directory to install perl.
+
+=item configure_options : ArrayRef(Optional)
+
+Command line arguments for ./Configure.
+
+(Default: C<< ['-de'] >>)
+
+=item build_dir (Optional)
+
+Temporary directory to build binary.
+
+=item jobs: Int(Optional)
+
+Parallel building and testing.
+
+(Default: 1)
+
+=back
+
+=item Perl::Build->install_from_git_repository($repository, %args)
+
+Install perl from a git repository.
+This method git-clone, git-checkout, build and install.
+$repository is a local git repository path or a remote git url, and
+you may specify commitish (branch, tag or sha) by adding @commitish:
+
+    /path/to/local/git/perl@v5.19.11
+    git://perl5.git.perl.org/perl.git@maint-5.18
 
 You can pass following options in %args.
 
