@@ -100,6 +100,38 @@ __THIS IS A DEVELOPMENT RELEASE. API MAY CHANGE WITHOUT NOTICE__.
 
         (Default: 1)
 
+- Perl::Build->install\_from\_git\_repository($repository, %args)
+
+    Install perl from a git repository.
+    This method git-clone, git-checkout, build and install.
+    $repository is a local git repository path or a remote git url, and
+    you may specify commitish (branch, tag or sha) by adding @commitish:
+
+        /path/to/local/git/perl@v5.19.11
+        git://perl5.git.perl.org/perl.git@maint-5.18
+
+    You can pass following options in %args.
+
+    - dst\_path (Required)
+
+        Destination directory to install perl.
+
+    - configure\_options : ArrayRef(Optional)
+
+        Command line arguments for ./Configure.
+
+        (Default: `['-de']`)
+
+    - build\_dir (Optional)
+
+        Temporary directory to build binary.
+
+    - jobs: Int(Optional)
+
+        Parallel building and testing.
+
+        (Default: 1)
+
 - Perl::Build->install(%args)
 
     Build and install Perl5 from extracted source directory.
@@ -161,6 +193,8 @@ Thanks
 
 Tokuhiro Matsuno <tokuhirom@gmail.com>
 
+
+
 # LICENSE
 
 Copyright (C) Tokuhiro Matsuno
@@ -191,3 +225,5 @@ This software takes lot of the code from [App::perlbrew](https://metacpan.org/po
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
+
+
